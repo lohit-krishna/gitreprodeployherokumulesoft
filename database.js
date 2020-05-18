@@ -65,7 +65,7 @@ VALUES (6, 'Suite', 10, 269);`;
 client.connect();
 client.query(checkTableExists)
     .then((response) => {
-        if (res.rows.length == 0) {
+        if (response.rows.length == 0) {
             client.query(
                 query,
                 (err, res) => {
@@ -77,7 +77,7 @@ client.query(checkTableExists)
                                 "INSERT INTO testpostgresdeploy VALUES ('UA502', 'Lohit', 'MR' ,'I am Lohit Krishna')"
                             );
                         }*/
-                        pool.query(queryInsert).then((res) => {
+                        pool.query(queryInsert).then((insertResp) => {
                             console.log("Data insert successful");
                         });
                     }
