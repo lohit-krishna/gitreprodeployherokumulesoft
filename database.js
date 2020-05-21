@@ -41,51 +41,81 @@ VALUES (5, 'Motor 1', 10, 50);
 INSERT INTO products (id, name, quantity, price)
 VALUES (6, 'Suite', 10, 269);`;
 
-/*pool
-    .query(checkTableExists)
-    .then((res) => {
-        if (res.rows.length == 0) {
-            pool.query(query).then((res) => {
-                console.log("Table is successfully created");
-                pool.query(queryInsert).then((res) => {
-                    console.log("Data insert successful");
-                });
-            });
-        } else {
-            console.log("Table already Exists!!!");
+
+
+/*function queryBuilder(operation, tableName, allFields, valuesArray, fieldsArray, condition = '') {
+    var query = '';
+    if (operation.toLowerCase() === "select") {
+        query = ''
+        if (allFields === true)
+            query = operation + ' * FROM ' + tableName;
+        else {
+            query = operation + " " + fieldsArray.toString() + ' FROM ' + tableName;
+
         }
-    })
-    .catch((err) => {
-        console.error(err);
-    })
-    .finally(() => {
-        //pool.end();
-    });*/
+        query = condition === '' ? query : query + ' where ' + condition;
+
+
+    } else if (operation.toLowerCase() === 'insert') {
+        query = ''
+        if (allFields === true) {
+            query = 'INSERT INTO ' + tableName + ' VALUES ';
+        } else {
+            var query = 'INSERT INTO ' + tableName + '(' + fieldsArray.toString() + ')' + ' VALUES ';
+        }
+        for (let i = 0; i < valuesArray.length; i++) {
+            query = query + '(';
+            for (let j = 0; j < valuesArray[i].length; j++) {
+
+                if (typeof valuesArray[i][j] === "string")
+                    query = query + '"' + valuesArray[i][j].toString() + '"';
+                else
+                    query = query + valuesArray[i][j].toString();
+
+                query = j === valuesArray[i].length - 1 ? query = query : query = query + ",";
+
+            }
+            query = i === valuesArray.length - 1 ? query = query + ")" : query = query + "),";
+
+        }
+
+
+    } else if (operation.toLowerCase() === 'create') {
+        query = 'CREATE TABLE ' + tableName + '(' + fieldsArray.toString() + ')'
+    }
+    query = query + ';';
+    return query;
+}*/
+
+function insertContextFunction() {
+    return pool.query(queryInsert);
+
+    /*
+    .then((insertResp) => {
+        console.log("Data insert successful");
+    });
+    pool.end();
+    client.end();*/
+}
+
+
+function contextFunction(response) {
+    if (response.rows.length == 0) {
+        return client.query(query);
+    }
+
+}
 
 client.connect();
 client.query(checkTableExists)
     .then((response) => {
-        if (response.rows.length == 0) {
-            client.query(
-                query,
-                (err, res) => {
-                    if (err) {
-                        return console.error('error with PostgreSQL database', err);
-                    } else {
-                        /*for (let i = 0; i < 10; i++) {
-                            pool.query(
-                                "INSERT INTO testpostgresdeploy VALUES ('UA502', 'Lohit', 'MR' ,'I am Lohit Krishna')"
-                            );
-                        }*/
-                        pool.query(queryInsert).then((insertResp) => {
-                            console.log("Data insert successful");
-                        });
-                    }
-                    pool.end();
-                    client.end();
-                }
-            );
-
-        }
-
-    });
+        return contextFunction(response);
+    })
+    .then((response) => {
+        return insertContextFunction();
+    })
+    .then(response => {
+        console.log("Data insert successful");
+        pool.end();
+        client.end();
+    })
