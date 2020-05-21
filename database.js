@@ -87,32 +87,22 @@ VALUES (6, 'Suite', 10, 269);`;
     return query;
 }*/
 
-function insertContextFunction() {
-    return pool.query(queryInsert);
-
-    /*
-    .then((insertResp) => {
-        console.log("Data insert successful");
-    });
-    pool.end();
-    client.end();*/
-}
 
 
-function contextFunction(response) {
-    if (response.rows.length == 0) {
+function contextFunc(response, contextString) {
+    if (contextString === 'create table' && response.rows.length == 0)
         return client.query(query);
-    }
-
+    else if (contextString === 'insert')
+        return pool.query(queryInsert);
 }
 
 client.connect();
 client.query(checkTableExists)
     .then((response) => {
-        return contextFunction(response);
+        return contextFunc(response, 'create table');
     })
     .then((response) => {
-        return insertContextFunction();
+        return contextFunc(response, 'insert');
     })
     .then(response => {
         console.log("Data insert successful");
